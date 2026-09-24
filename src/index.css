@@ -1,0 +1,271 @@
+/*
+ * Variáveis centrais da identidade visual do finea.
+ * Mantê-las aqui facilita ajustar a aparência sem procurar cores espalhadas.
+ */
+:root {
+  color: #f5f7f5;
+  background: #0d0d0d;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --background: #0d0d0d;
+  --surface: #151715;
+  --surface-light: #1d211d;
+  --border: #2d332d;
+  --muted: #9aa39a;
+  --text: #f5f7f5;
+  --accent: #35d66f;
+  --accent-dark: #1b9e4c;
+  --danger: #ff8e8e;
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, #17351f 0, var(--background) 38%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.auth-layout,
+.dashboard-layout {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #09160d;
+  background: var(--accent);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.auth-intro {
+  padding: 16px 0 28px;
+}
+
+.eyebrow {
+  margin: 18px 0 8px;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 620px;
+  margin-bottom: 12px;
+  font-size: clamp(2.1rem, 8vw, 4.6rem);
+  line-height: 1;
+}
+
+h2 {
+  margin-bottom: 8px;
+  font-size: 1.45rem;
+}
+
+.subtitle,
+.muted {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.auth-card,
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(21, 23, 21, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.auth-card {
+  padding: 24px;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 24px;
+  border-radius: 10px;
+  background: var(--surface-light);
+}
+
+.mode-switch button {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px;
+  color: var(--muted);
+  background: transparent;
+}
+
+.mode-switch button.active {
+  color: #09160d;
+  background: var(--accent);
+  font-weight: 700;
+}
+
+.form-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 13px 14px;
+  color: var(--text);
+  background: #101210;
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(53, 214, 111, 0.15);
+}
+
+.primary-button,
+.secondary-button {
+  border-radius: 9px;
+  padding: 12px 16px;
+  font-weight: 700;
+}
+
+.primary-button {
+  border: 1px solid var(--accent);
+  color: #09160d;
+  background: var(--accent);
+}
+
+.primary-button:hover {
+  background: #52e585;
+}
+
+.secondary-button {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface-light);
+}
+
+.feedback {
+  margin: 0;
+  color: var(--danger);
+  line-height: 1.5;
+}
+
+.feedback.success {
+  color: var(--accent);
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0 32px;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 8px;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.panel-accent {
+  border-color: rgba(53, 214, 111, 0.45);
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--accent);
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent);
+}
+
+@media (min-width: 700px) {
+  .app-shell {
+    padding: 48px 32px;
+  }
+
+  .auth-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: 64px;
+    min-height: calc(100vh - 96px);
+  }
+
+  .auth-intro {
+    padding: 0;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panel-accent {
+    grid-column: 1 / -1;
+  }
+}

@@ -32,7 +32,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -220,8 +221,115 @@ h2 {
   gap: 16px;
 }
 
+.metric-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  display: grid;
+  gap: 7px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.metric-card span,
+.metric-card small,
+.list-item small {
+  color: var(--muted);
+}
+
+.metric-card strong {
+  font-size: 1.7rem;
+}
+
+.metric-highlight {
+  border-color: rgba(53, 214, 111, 0.5);
+  background: linear-gradient(135deg, rgba(53, 214, 111, 0.16), var(--surface));
+}
+
 .panel {
   padding: 22px;
+}
+
+.inline-form,
+.form-row {
+  display: grid;
+  gap: 12px;
+}
+
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 13px 14px;
+  color: var(--text);
+  background: #101210;
+}
+
+.list-panel {
+  min-width: 0;
+}
+
+.item-list {
+  display: grid;
+  gap: 4px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.list-item > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.list-item strong,
+.list-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.positive {
+  color: var(--accent);
+}
+
+.negative {
+  color: var(--danger);
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.icon-button:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .panel-accent {
@@ -263,6 +371,19 @@ h2 {
 
   .dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .form-row,
+  .inline-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inline-form {
+    align-items: end;
   }
 
   .panel-accent {

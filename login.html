@@ -62,9 +62,13 @@
   </style>
 </head>
 <body>
+  <!-- Mantém este endereço legado apontando para a aplicação React principal. -->
   <script>
-    const target = 'http://localhost:5173/';
-    if (window.location.origin !== 'http://localhost:5173') {
+      // A instância atual do Vite roda na porta 5177 por causa de processos antigos ocupando portas anteriores.
+      const target = 'http://localhost:5177/';
+
+    // Redireciona somente quando o arquivo foi aberto fora da aplicação principal.
+      if (window.location.origin !== 'http://localhost:5177') {
       window.location.replace(target);
     }
   </script>

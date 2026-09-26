@@ -30,6 +30,45 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// Garante as tabelas da aplicação ao iniciar, facilitando a primeira execução do projeto.
+async function initializeDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS financial_settings (
+      user_id INT UNSIGNED NOT NULL PRIMARY KEY,
+      monthly_income DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_settings_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS transactions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id INT UNSIGNED NOT NULL,
+      type ENUM('income', 'expense', 'transfer') NOT NULL,
+      description VARCHAR(160) NOT NULL,
+      category VARCHAR(80) NOT NULL DEFAULT 'Geral',
+      amount DECIMAL(12, 2) NOT NULL,
+      transaction_date DATE NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY idx_transactions_user_date (user_id, transaction_date),
+      CONSTRAINT fk_transactions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS investments (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id INT UNSIGNED NOT NULL,
+      name VARCHAR(120) NOT NULL,
+      type VARCHAR(80) NOT NULL,
+      amount DECIMAL(12, 2) NOT NULL,
+      profitability DECIMAL(6, 2) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY idx_investments_user (user_id),
+      CONSTRAINT fk_investments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB
+  `);
+}
+
 // Aceita somente a origem do frontend definida no .env e interpreta corpos JSON.
 app.use(cors({ origin: frontendUrl }));
 app.use(express.json());
@@ -147,19 +186,109 @@ app.get('/api/protected', authenticate, (request, response) => {
   response.json({ message: 'Você acessou uma rota protegida.', user: request.user });
 });
 
+// Retorna todos os dados necessários para montar o dashboard em uma única chamada.
+app.get('/api/finance/summary', authenticate, async (request, response) => {
+  try {
+    const userId = request.user.id;
+    const [[settings]] = await pool.execute('SELECT monthly_income FROM financial_settings WHERE user_id = ?', [userId]);
+    const [transactions] = await pool.execute(
+      'SELECT id, type, description, category, amount, transaction_date FROM transactions WHERE user_id = ? ORDER BY transaction_date DESC, id DESC LIMIT 50',
+      [userId],
+    );
+    const [investments] = await pool.execute(
+      'SELECT id, name, type, amount, profitability FROM investments WHERE user_id = ? ORDER BY id DESC',
+      [userId],
+    );
+    return response.json({ monthlyIncome: Number(settings?.monthly_income || 0), transactions, investments });
+  } catch (error) {
+    console.error(`Erro ao carregar dashboard: ${error.message}`);
+    return response.status(503).json({ error: 'Não foi possível carregar seus dados financeiros.' });
+  }
+});
+
+// Salva ou atualiza a renda mensal informada pelo usuário.
+app.put('/api/finance/settings', authenticate, async (request, response) => {
+  const monthlyIncome = Number(request.body.monthlyIncome);
+  if (!Number.isFinite(monthlyIncome) || monthlyIncome < 0) {
+    return response.status(400).json({ error: 'Informe uma renda mensal válida.' });
+  }
+  try {
+    await pool.execute(
+      'INSERT INTO financial_settings (user_id, monthly_income) VALUES (?, ?) ON DUPLICATE KEY UPDATE monthly_income = VALUES(monthly_income)',
+      [request.user.id, monthlyIncome],
+    );
+    return response.json({ monthlyIncome });
+  } catch (error) {
+    console.error(`Erro ao salvar renda: ${error.message}`);
+    return response.status(503).json({ error: 'Não foi possível salvar sua renda.' });
+  }
+});
+
+// Registra uma entrada, saída ou transferência financeira.
+app.post('/api/finance/transactions', authenticate, async (request, response) => {
+  const { type, description, category = 'Geral', amount, transactionDate } = request.body;
+  const numericAmount = Number(amount);
+  if (!['income', 'expense', 'transfer'].includes(type) || typeof description !== 'string' || !description.trim() || !Number.isFinite(numericAmount) || numericAmount <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(transactionDate || '')) {
+    return response.status(400).json({ error: 'Preencha tipo, descrição, valor e data corretamente.' });
+  }
+  try {
+    const [result] = await pool.execute(
+      'INSERT INTO transactions (user_id, type, description, category, amount, transaction_date) VALUES (?, ?, ?, ?, ?, ?)',
+      [request.user.id, type, description.trim(), String(category).trim() || 'Geral', numericAmount, transactionDate],
+    );
+    return response.status(201).json({ id: result.insertId });
+  } catch (error) {
+    console.error(`Erro ao salvar transação: ${error.message}`);
+    return response.status(503).json({ error: 'Não foi possível salvar a transação.' });
+  }
+});
+
+// Exclui somente uma transação pertencente ao usuário autenticado.
+app.delete('/api/finance/transactions/:id', authenticate, async (request, response) => {
+  await pool.execute('DELETE FROM transactions WHERE id = ? AND user_id = ?', [request.params.id, request.user.id]);
+  return response.status(204).end();
+});
+
+// Salva um investimento com valor aplicado e rentabilidade informativa.
+app.post('/api/finance/investments', authenticate, async (request, response) => {
+  const { name, type, amount, profitability = 0 } = request.body;
+  const numericAmount = Number(amount);
+  const numericProfitability = Number(profitability);
+  if (typeof name !== 'string' || !name.trim() || typeof type !== 'string' || !type.trim() || !Number.isFinite(numericAmount) || numericAmount <= 0 || !Number.isFinite(numericProfitability)) {
+    return response.status(400).json({ error: 'Preencha investimento, tipo e valor corretamente.' });
+  }
+  try {
+    const [result] = await pool.execute(
+      'INSERT INTO investments (user_id, name, type, amount, profitability) VALUES (?, ?, ?, ?, ?)',
+      [request.user.id, name.trim(), type.trim(), numericAmount, numericProfitability],
+    );
+    return response.status(201).json({ id: result.insertId });
+  } catch (error) {
+    console.error(`Erro ao salvar investimento: ${error.message}`);
+    return response.status(503).json({ error: 'Não foi possível salvar o investimento.' });
+  }
+});
+
+// Exclui somente um investimento pertencente ao usuário autenticado.
+app.delete('/api/finance/investments/:id', authenticate, async (request, response) => {
+  await pool.execute('DELETE FROM investments WHERE id = ? AND user_id = ?', [request.params.id, request.user.id]);
+  return response.status(204).end();
+});
+
 // Converte erros não tratados em uma resposta JSON sem expor detalhes internos.
 app.use((error, _request, response, _next) => {
   console.error(`Erro inesperado no servidor: ${error.message}`);
   response.status(500).json({ error: 'Erro interno do servidor.' });
 });
 
-// O backend usa 5000, enquanto o Vite continua em 5174 durante o desenvolvimento.
+// O backend usa 5002, enquanto o Vite continua em 5176 durante o desenvolvimento.
 app.listen(port, () => {
   console.log(`Servidor API iniciado em http://localhost:${port}`);
 });
 
 // Testa a conexão logo após iniciar e mantém a API disponível para mostrar erros claros.
 try {
+  await initializeDatabase();
   const connection = await pool.getConnection();
   console.log(`Conexão com MySQL estabelecida em ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
   connection.release();

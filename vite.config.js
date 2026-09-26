@@ -6,9 +6,9 @@ export default defineConfig({
   // Caminhos relativos permitem abrir o bundle gerado em um servidor estático.
   base: './',
   server: {
-    port: 5174,
+    port: 5176,
     proxy: {
-      '/api': 'http://localhost:5000',
+      '/api': 'http://localhost:5003',
     },
   },
   plugins: [react()],
